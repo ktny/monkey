@@ -204,6 +204,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 // 構文解析して式文を返す
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	defer untrace(trace("parseExpressionStatement"))
+
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
 	stmt.Expression = p.parseExpression(LOWEST)
@@ -214,6 +216,34 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	}
 
 	return stmt
+}
+
+// 構文解析して式を返す
+// precedence: 現在のparseExpression呼び出しの右結合力を表す。優先順位が高いほどleftExpがそのまま返る
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	defer untrace(trace("parseExpression"))
+
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
+		return nil
+	}
+	leftExp := prefix()
+
+	// peekTokenの優先順位が現在のもの以下であればループしない
+	// これによりASTを演算子の優先順位で正しくネストする
+	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Type]
+		if infix == nil {
+			return leftExp
+		}
+
+		p.nextToken()
+
+		leftExp = infix(leftExp)
+	}
+
+	return leftExp
 }
 
 // トークンに対応する前置構文解析関数がないエラーを追加する
@@ -229,6 +259,8 @@ func (p *Parser) parseIdentifier() ast.Expression {
 
 // 構文解析して式（数値リテラル）を返す
 func (p *Parser) parseIntegerLiteral() ast.Expression {
+	defer untrace(trace("parseIntegerLiteral"))
+
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
@@ -244,6 +276,8 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 // 構文解析して式（前置演算子式）を返す
 func (p *Parser) parsePrefixExpression() ast.Expression {
+	defer untrace(trace("parsePrefixExpression"))
+
 	expression := &ast.PrefixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
@@ -257,6 +291,8 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 
 // 構文解析して式（中置演算子式）を返す
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	defer untrace(trace("parseInfixExpression"))
+
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
@@ -268,29 +304,4 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	expression.Right = p.parseExpression(precedence)
 
 	return expression
-}
-
-// 構文解析して式を返す
-func (p *Parser) parseExpression(precedence int) ast.Expression {
-	prefix := p.prefixParseFns[p.curToken.Type]
-	if prefix == nil {
-		p.noPrefixParseFnError(p.curToken.Type)
-		return nil
-	}
-	leftExp := prefix()
-
-	// peekTokenの優先順位が今より低いものに会うまでループ
-	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
-		// peekTokenTypeが中置構文解析関数を持っていればそれで左辺を登録、右辺を再帰的にparseExpressionする
-		infix := p.infixParseFns[p.peekToken.Type]
-		if infix == nil {
-			return leftExp
-		}
-
-		p.nextToken()
-
-		leftExp = infix(leftExp)
-	}
-
-	return leftExp
 }
