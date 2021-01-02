@@ -55,6 +55,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.TRUE, p.parseBoolean)
+	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 
@@ -204,7 +206,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 // 構文解析して式文を返す
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	defer untrace(trace("parseExpressionStatement"))
+	// defer untrace(trace("parseExpressionStatement"))
 
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
@@ -221,7 +223,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 // 構文解析して式を返す
 // precedence: 現在のparseExpression呼び出しの右結合力を表す。優先順位が高いほどleftExpがそのまま返る
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	defer untrace(trace("parseExpression"))
+	// defer untrace(trace("parseExpression"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -259,7 +261,7 @@ func (p *Parser) parseIdentifier() ast.Expression {
 
 // 構文解析して式（数値リテラル）を返す
 func (p *Parser) parseIntegerLiteral() ast.Expression {
-	defer untrace(trace("parseIntegerLiteral"))
+	// defer untrace(trace("parseIntegerLiteral"))
 
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
@@ -274,9 +276,15 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
+// 構文解析して式（真偽値リテラル）を返す
+func (p *Parser) parseBoolean() ast.Expression {
+	// defer untrace(trace("parseBoolean"))
+	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
+}
+
 // 構文解析して式（前置演算子式）を返す
 func (p *Parser) parsePrefixExpression() ast.Expression {
-	defer untrace(trace("parsePrefixExpression"))
+	// defer untrace(trace("parsePrefixExpression"))
 
 	expression := &ast.PrefixExpression{
 		Token:    p.curToken,
@@ -291,7 +299,7 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 
 // 構文解析して式（中置演算子式）を返す
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
-	defer untrace(trace("parseInfixExpression"))
+	// defer untrace(trace("parseInfixExpression"))
 
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
