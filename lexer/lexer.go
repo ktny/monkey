@@ -7,8 +7,8 @@ import (
 // Lexer 字句解析
 type Lexer struct {
 	input        string
-	position     int
-	readPosition int
+	position     int // 現在位置
+	readPosition int // 次の位置
 	ch           byte
 }
 
@@ -71,6 +71,7 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
+	// 1, 2文字トークン以外は識別子または数値として字句解析する
 	default:
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
@@ -93,6 +94,25 @@ func newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }
 
+// 現在の文字から連続する文字列を返す
+func (l *Lexer) readIdentifier() string {
+	position := l.position
+	for isLetter(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position]
+}
+
+// 現在の文字から連続する数値を文字列として返す
+func (l *Lexer) readNumber() string {
+	position := l.position
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position]
+}
+
+// 次の位置の文字を読み、readPositionを進める
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
@@ -103,28 +123,12 @@ func (l *Lexer) readChar() {
 	l.readPosition++
 }
 
+// 次の位置の文字を読み、readPositionは進めない
 func (l *Lexer) peekChar() byte {
 	if l.readPosition >= len(l.input) {
 		return 0
-	} else {
-		return l.input[l.readPosition]
 	}
-}
-
-func (l *Lexer) readIdentifier() string {
-	position := l.position
-	for isLetter(l.ch) {
-		l.readChar()
-	}
-	return l.input[position:l.position]
-}
-
-func (l *Lexer) readNumber() string {
-	position := l.position
-	for isDigit(l.ch) {
-		l.readChar()
-	}
-	return l.input[position:l.position]
+	return l.input[l.readPosition]
 }
 
 func isLetter(ch byte) bool {
