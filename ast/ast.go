@@ -54,6 +54,54 @@ func (il *IntegerLiteral) expressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return il.Token.Literal }
 
+// PrefixExpression 前置演算子式
+// Expression I/F
+// 	expressionNode()
+// Node I/F
+// 	TokenLiteral()
+// 	String()
+type PrefixExpression struct {
+	Token    token.Token // 演算子トークン。ex. -
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) expressionNode()      {}
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+	return out.String()
+}
+
+// InfixExpression 中置演算子式
+// Expression I/F
+// 	expressionNode()
+// Node I/F
+// 	TokenLiteral()
+// 	String()
+type InfixExpression struct {
+	Token    token.Token // 演算子トークン。ex. +
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (in *InfixExpression) expressionNode()      {}
+func (in *InfixExpression) TokenLiteral() string { return in.Token.Literal }
+func (in *InfixExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(in.Left.String())
+	out.WriteString(" " + in.Operator + " ")
+	out.WriteString(in.Right.String())
+	out.WriteString(")")
+	return out.String()
+}
+
 // LetStatement let文。
 // Statement I/F
 // 	statementNode()
