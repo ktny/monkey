@@ -218,6 +218,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 }
 
+// 中置演算子式の構文解析テスト
 func TestParsingInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
@@ -284,4 +285,37 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	}
 
 	return true
+}
+
+// 演算子の優先順位テスト
+func TestOperatorPrecedenceExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"-a * b", "((-a) * b)"},
+		{"!-a", "(!(-a))"},
+		{"a + b + c", "((a + b) + c)"},
+		{"a + b - c", "((a + b) - c)"},
+		{"a * b * c", "((a * b) * c)"},
+		{"a * b / c", "((a * b) / c)"},
+		{"a + b / c", "(a + (b / c))"},
+		{"a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"},
+		{"3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"},
+		{"5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"},
+		{"5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"},
+		{"3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParseErrors(t, p)
+
+		actual := program.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
 }
