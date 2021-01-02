@@ -106,10 +106,6 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 	return true
 }
 
-// return文を構文解析し、成功したか否かを返す
-// func testReturnStatement(t *testing.T, s ast.Statement) bool {
-// }
-
 // パーサーの持つエラーを出力する
 func checkParseErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
@@ -123,6 +119,7 @@ func checkParseErrors(t *testing.T, p *Parser) {
 	t.FailNow()
 }
 
+// 識別子の構文解析テスト
 func TestIdentifierExpression(t *testing.T) {
 	input := "foobar;"
 
@@ -151,5 +148,37 @@ func TestIdentifierExpression(t *testing.T) {
 	}
 	if ident.TokenLiteral() != "foobar" {
 		t.Errorf("ident.TokenLiteral() not %s. got=%s", "foobar", ident.TokenLiteral())
+	}
+}
+
+// 数値リテラルの構文解析テスト
+func TestIntegerLiteralExpression(t *testing.T) {
+	input := "5;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+	}
+
+	// 式文にキャストする
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statemetns[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	// 式文を数値リテラルにキャストする
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expression)
+	}
+	if literal.Value != 5 {
+		t.Errorf("literal.Value not %d. got=%d", 5, literal.Value)
+	}
+	if literal.TokenLiteral() != "5" {
+		t.Errorf("literal.TokenLiteral() not %s. got=%s", "5", literal.TokenLiteral())
 	}
 }
