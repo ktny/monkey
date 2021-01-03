@@ -84,8 +84,6 @@ func TestReturnStatements(t *testing.T) {
 			t.Fatalf("stmt not *ast.returnStatement. got=%T", stmt)
 		}
 
-		fmt.Println(returnStmt.ReturnValue)
-
 		if !testLiteralExpression(t, returnStmt.ReturnValue, tt.expectedReturnValue) {
 			return
 		}
