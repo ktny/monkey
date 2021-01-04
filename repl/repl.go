@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/ktny/monkey/object"
+
 	"github.com/ktny/monkey/evaluator"
 	"github.com/ktny/monkey/lexer"
 	"github.com/ktny/monkey/parser"
@@ -15,6 +17,7 @@ const PROMPT = ">> "
 // Start REPLの開始
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+	env := object.NewEnvironment()
 
 	for {
 		fmt.Printf(PROMPT)
@@ -33,7 +36,7 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		evaluated := evaluator.Eval(program)
+		evaluated := evaluator.Eval(program, env)
 		if evaluated != nil {
 			io.WriteString(out, evaluated.Inspect())
 			io.WriteString(out, "\n")
