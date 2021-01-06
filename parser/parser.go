@@ -234,24 +234,24 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	// defer untrace(trace("parseExpression"))
 
-	prefix := p.prefixParseFns[p.curToken.Type]
-	if prefix == nil {
+	prefixParseFn := p.prefixParseFns[p.curToken.Type]
+	if prefixParseFn == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
 		return nil
 	}
-	leftExp := prefix()
+	leftExp := prefixParseFn()
 
 	// peekTokenの優先順位が現在のもの以下であればループしない
 	// これによりASTを演算子の優先順位で正しくネストする
 	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
-		infix := p.infixParseFns[p.peekToken.Type]
-		if infix == nil {
+		infixParseFn := p.infixParseFns[p.peekToken.Type]
+		if infixParseFn == nil {
 			return leftExp
 		}
 
 		p.nextToken()
 
-		leftExp = infix(leftExp)
+		leftExp = infixParseFn(leftExp)
 	}
 
 	return leftExp
