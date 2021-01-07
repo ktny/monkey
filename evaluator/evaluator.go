@@ -285,8 +285,10 @@ func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Enviro
 }
 
 func unwrapReturnValue(obj object.Object) object.Object {
+	// ReturnValueがあればそれを返す
 	if returnValue, ok := obj.(*object.ReturnValue); ok {
 		return returnValue
 	}
+	// なければ関数のBodyがreturnされる。つまりreturn文が省略された場合は最後のブロックがreturnされる
 	return obj
 }
