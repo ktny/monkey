@@ -17,6 +17,9 @@ const (
 	// 数値リテラル
 	INT = "INT"
 
+	// 文字列リテラル
+	STRING = "STRING"
+
 	// 演算子
 	ASSIGN   = "="
 	PLUS     = "+"
@@ -26,9 +29,8 @@ const (
 	SLASH    = "/"
 	EQ       = "=="
 	NOT_EQ   = "!="
-
-	LT = "<"
-	GT = ">"
+	LT       = "<"
+	GT       = ">"
 
 	// デリミタ
 	COMMA     = ","
