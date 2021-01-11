@@ -740,68 +740,109 @@ func TestParsingHashLiteralsStringKeys(t *testing.T) {
 	}
 }
 
-// func TestParsingEmptyHashLiteral(t *testing.T) {
-// 	input := "{}"
+func TestParsingEmptyHashLiteral(t *testing.T) {
+	input := "{}"
 
-// 	l := lexer.New(input)
-// 	p := New(l)
-// 	program := p.ParseProgram()
-// 	checkParserErrors(t, p)
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
 
-// 	stmt := program.Statements[0].(*ast.ExpressionStatement)
-// 	hash, ok := stmt.Expression.(*ast.HashLiteral)
-// 	if !ok {
-// 		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expression)
-// 	}
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	hash, ok := stmt.Expression.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expression)
+	}
 
-// 	if len(hash.Pairs) != 0 {
-// 		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
-// 	}
-// }
+	if len(hash.Pairs) != 0 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+}
 
-// func TestParsingHashLiteralsWithExpressions(t *testing.T) {
-// 	input := `{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}`
+func TestParsingHashLiteralsWithExpressions(t *testing.T) {
+	input := `{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}`
 
-// 	l := lexer.New(input)
-// 	p := New(l)
-// 	program := p.ParseProgram()
-// 	checkParserErrors(t, p)
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
 
-// 	stmt := program.Statements[0].(*ast.ExpressionStatement)
-// 	hash, ok := stmt.Expression.(*ast.HashLiteral)
-// 	if !ok {
-// 		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expression)
-// 	}
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	hash, ok := stmt.Expression.(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", stmt.Expression)
+	}
 
-// 	if len(hash.Pairs) != 3 {
-// 		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
-// 	}
+	if len(hash.Pairs) != 3 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
 
-// 	tests := map[string]func(ast.Expression){
-// 		"one": func(e ast.Expression) {
-// 			testInfixExpression(t, e, 0, "+", 1)
-// 		},
-// 		"two": func(e ast.Expression) {
-// 			testInfixExpression(t, e, 10, "-", 8)
-// 		},
-// 		"three": func(e ast.Expression) {
-// 			testInfixExpression(t, e, 15, "/", 5)
-// 		},
-// 	}
+	tests := map[string]func(ast.Expression){
+		"one": func(e ast.Expression) {
+			testInfixExpression(t, e, 0, "+", 1)
+		},
+		"two": func(e ast.Expression) {
+			testInfixExpression(t, e, 10, "-", 8)
+		},
+		"three": func(e ast.Expression) {
+			testInfixExpression(t, e, 15, "/", 5)
+		},
+	}
 
-// 	for key, value := range hash.Pairs {
-// 		literal, ok := key.(*ast.StringLiteral)
-// 		if !ok {
-// 			t.Errorf("key is not ast.StringLiteral. got=%T", key)
-// 			continue
-// 		}
+	for key, value := range hash.Pairs {
+		literal, ok := key.(*ast.StringLiteral)
+		if !ok {
+			t.Errorf("key is not ast.StringLiteral. got=%T", key)
+			continue
+		}
 
-// 		testFunc, ok := tests[literal.String()]
-// 		if !ok {
-// 			t.Errorf("No test function for key %q found", literal.String())
-// 			continue
-// 		}
+		testFunc, ok := tests[literal.String()]
+		if !ok {
+			t.Errorf("No test function for key %q found", literal.String())
+			continue
+		}
 
-// 		testFunc(value)
-// 	}
-// }
+		testFunc(value)
+	}
+}
+
+func TestMacroLiteralParsing(t *testing.T) {
+	input := `macro(x, y) { x + y; }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statemetns[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	macro, ok := stmt.Expression.(*ast.MacroLiteral)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.MacroLiteral. got=%T", stmt.Expression)
+	}
+
+	if len(macro.Parameters) != 2 {
+		t.Fatalf("macro literal parameters wrong. want 2, got=%d\n", len(macro.Parameters))
+	}
+
+	testLiteralExpression(t, macro.Parameters[0], "x")
+	testLiteralExpression(t, macro.Parameters[1], "y")
+
+	if len(macro.Body.Statements) != 1 {
+		t.Fatalf("macro.Body.Statements has not 1 statements. got=%d\n", len(macro.Body.Statements))
+	}
+
+	bodyStmt, ok := macro.Body.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("macro body stmt is not ast.ExpressionStatement. got=%d\n", len(macro.Body.Statements))
+	}
+
+	testInfixExpression(t, bodyStmt.Expression, "x", "+", "y")
+}
